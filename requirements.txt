@@ -1,4 +1,6 @@
-gspread
+gspread~=6.2.1
 google-auth-oauthlib
-python-telegram-bot
-python-dotenv
+python-telegram-bot>=20.0
+python-dotenv~=1.1.1
+httpx
+telegram~=0.0.1

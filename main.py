@@ -1,21 +1,32 @@
 import os
 import time
+import asyncio
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import telegram
 from dotenv import load_dotenv
+
+# Load environment variables from a .env file for local development
 load_dotenv()
+
 # --- CONFIGURATION ---
-# These should be set as environment variables on your hosting service (Render)
-# For local testing, you can temporarily hardcode them.
+# These are now read exclusively from environment variables.
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY")
 
 # Path to your Google credentials file
-# On Render, you will need to add your credentials.json as a secret file.
 CREDENTIALS_FILE = "credentials.json"
+
+
+def check_env_variables():
+    """Checks if all required environment variables are set."""
+    if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GOOGLE_SHEET_KEY]):
+        print("❌ FATAL ERROR: One or more environment variables are not set.")
+        print("   Please set TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, and GOOGLE_SHEET_KEY.")
+        return False
+    return True
 
 
 def setup_google_sheets_client():
@@ -45,16 +56,13 @@ def get_todays_schedule(client):
         spreadsheet = client.open_by_key(GOOGLE_SHEET_KEY)
         worksheet = spreadsheet.worksheet(today_str)
 
-        # Get all data, skipping the header rows
         all_data = worksheet.get_all_values()[3:]
 
         schedule = []
         for row in all_data:
             time_str, activity = row[0], row[1]
-            # Stop parsing when we reach the flexible tasks section or an empty row
             if not time_str or "Flexible" in activity:
                 break
-            # Skip empty placeholder activities
             if activity and activity != "---":
                 schedule.append({"time": time_str, "activity": activity})
 
@@ -70,51 +78,51 @@ def get_todays_schedule(client):
         return []
 
 
-def send_telegram_notification(bot, message):
-    """Sends a message to your Telegram chat."""
+async def send_telegram_notification(bot, message):
+    """Sends a message to your Telegram chat asynchronously."""
     try:
-        bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         print(f"🚀 Notification sent: {message}")
     except Exception as e:
         print(f"❌ Failed to send Telegram notification: {e}")
 
 
-def main():
-    """The main loop for the notification service."""
+async def main():
+    """The main async loop for the notification service."""
+    if not check_env_variables():
+        return
+
     print("--- Starting Notification Service ---")
 
-    # Initialize the clients
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     gspread_client = setup_google_sheets_client()
 
-    # Get the initial schedule
     schedule = get_todays_schedule(gspread_client)
     last_day_checked = datetime.now().day
-    notified_tasks = set()  # To avoid sending duplicate notifications
+    notified_tasks = set()
 
     while True:
         current_time = datetime.now()
 
-        # Check if it's a new day to fetch a new schedule
         if current_time.day != last_day_checked:
             print("\n🌅 New day detected! Fetching new schedule...")
             schedule = get_todays_schedule(gspread_client)
             last_day_checked = current_time.day
-            notified_tasks.clear()  # Reset the notified tasks for the new day
+            notified_tasks.clear()
 
-        # Check for tasks to notify
         current_time_str_12hr = current_time.strftime("%I:%M %p").upper()
 
         for task in schedule:
             task_key = f"{task['time']}-{task['activity']}"
             if task['time'].upper() == current_time_str_12hr and task_key not in notified_tasks:
                 message = f"🔔 Reminder: It's time for '{task['activity']}'"
-                send_telegram_notification(bot, message)
+                await send_telegram_notification(bot, message)
                 notified_tasks.add(task_key)
 
-        # Wait for 60 seconds before checking again
-        time.sleep(60)
+        # Use asyncio.sleep instead of time.sleep
+        await asyncio.sleep(60)
 
 
 if __name__ == "__main__":
-    main()
+    # Run the main async function
+    asyncio.run(main())
