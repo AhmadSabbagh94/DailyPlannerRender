@@ -4,13 +4,14 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import telegram
-
+from dotenv import load_dotenv
+load_dotenv()
 # --- CONFIGURATION ---
 # These should be set as environment variables on your hosting service (Render)
 # For local testing, you can temporarily hardcode them.
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "7630172063:AAH5oN5PdB46eFZK1dwQG1MGsNNHiilh4_g")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "5411991305")
-GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY", "1PPCkmnGxajOP27sxJZkrzbnOlSTQ_Dy5ZGulXJOXLpI")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY")
 
 # Path to your Google credentials file
 # On Render, you will need to add your credentials.json as a secret file.
