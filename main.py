@@ -8,8 +8,8 @@ import telegram
 # --- CONFIGURATION ---
 # These should be set as environment variables on your hosting service (Render)
 # For local testing, you can temporarily hardcode them.
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "7630172063:AAH5oN5PdB46eFZK1dwQG1MGsNNHiilh4_g")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "5411991305")
 GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY", "1PPCkmnGxajOP27sxJZkrzbnOlSTQ_Dy5ZGulXJOXLpI")
 
 # Path to your Google credentials file
