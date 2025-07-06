@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="update with telegram token and chat id">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="Update security issue">
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,12 +105,21 @@
       <option name="project" value="LOCAL" />
       <updated>1751812411778</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Update security issue">
+      <option name="closed" value="true" />
+      <created>1751813221203</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1751813221203</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first publish" />
     <MESSAGE value="update with telegram token and chat id" />
-    <option name="LAST_COMMIT_MESSAGE" value="update with telegram token and chat id" />
+    <MESSAGE value="Update security issue" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update security issue" />
   </component>
 </project>
