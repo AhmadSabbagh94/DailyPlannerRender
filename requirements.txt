@@ -4,3 +4,4 @@ python-telegram-bot>=20.0
 python-dotenv~=1.1.1
 httpx
 telegram~=0.0.1
+Flask

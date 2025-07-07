@@ -6,36 +6,48 @@ import gspread
 from google.oauth2.service_account import Credentials
 import telegram
 from dotenv import load_dotenv
+from flask import Flask
+import threading
+
+# --- Flask Web Server Setup ---
+# This part makes the script act like a web service to satisfy Render's requirements.
+app = Flask(__name__)
+
+
+@app.route('/')
+def home():
+    # This is the endpoint that UptimeRobot will ping.
+    return "Notification service is running."
+
+
+def run_flask_app():
+    # Runs the Flask app in a separate thread.
+    # The host '0.0.0.0' is required by Render.
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+
+# --- Notification Logic (largely the same as before) ---
 
 # Load environment variables from a .env file for local development
 load_dotenv()
 
-# --- CONFIGURATION ---
-# These are now read exclusively from environment variables.
+# Configuration
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY")
-
-# Path to your Google credentials file
 CREDENTIALS_FILE = "credentials.json"
 
 
 def check_env_variables():
-    """Checks if all required environment variables are set."""
     if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GOOGLE_SHEET_KEY]):
         print("❌ FATAL ERROR: One or more environment variables are not set.")
-        print("   Please set TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, and GOOGLE_SHEET_KEY.")
         return False
     return True
 
 
 def setup_google_sheets_client():
-    """Authenticates with Google Sheets and returns a client object."""
     try:
-        SCOPES = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive.file"
-        ]
+        SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"]
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
         return gspread.authorize(creds)
     except FileNotFoundError:
@@ -47,29 +59,21 @@ def setup_google_sheets_client():
 
 
 def get_todays_schedule(client):
-    """Fetches and parses today's schedule from the Google Sheet."""
-    if not client:
-        return []
-
+    if not client: return []
     try:
         today_str = datetime.now().strftime("%Y-%m-%d")
         spreadsheet = client.open_by_key(GOOGLE_SHEET_KEY)
         worksheet = spreadsheet.worksheet(today_str)
-
         all_data = worksheet.get_all_values()[3:]
-
         schedule = []
         for row in all_data:
             time_str, activity = row[0], row[1]
-            if not time_str or "Flexible" in activity:
-                break
+            if not time_str or "Flexible" in activity: break
             if activity and activity != "---":
                 schedule.append({"time": time_str, "activity": activity})
-
         print(f"✅ Successfully fetched schedule for today: {today_str}")
         print(f"   Found {len(schedule)} timed tasks.")
         return schedule
-
     except gspread.exceptions.WorksheetNotFound:
         print(f"⚠️ No worksheet found for today ({today_str}). Will try again later.")
         return []
@@ -79,7 +83,6 @@ def get_todays_schedule(client):
 
 
 async def send_telegram_notification(bot, message):
-    """Sends a message to your Telegram chat asynchronously."""
     try:
         await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         print(f"🚀 Notification sent: {message}")
@@ -87,12 +90,11 @@ async def send_telegram_notification(bot, message):
         print(f"❌ Failed to send Telegram notification: {e}")
 
 
-async def main():
+async def notification_loop():
     """The main async loop for the notification service."""
-    if not check_env_variables():
-        return
+    if not check_env_variables(): return
 
-    print("--- Starting Notification Service ---")
+    print("--- Starting Notification Service Logic ---")
 
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     gspread_client = setup_google_sheets_client()
@@ -119,10 +121,14 @@ async def main():
                 await send_telegram_notification(bot, message)
                 notified_tasks.add(task_key)
 
-        # Use asyncio.sleep instead of time.sleep
         await asyncio.sleep(60)
 
 
 if __name__ == "__main__":
-    # Run the main async function
-    asyncio.run(main())
+    # 1. Start the Flask web server in a separate thread
+    flask_thread = threading.Thread(target=run_flask_app, daemon=True)
+    flask_thread.start()
+    print("🚀 Flask web server started in a background thread.")
+
+    # 2. Run the main async notification loop
+    asyncio.run(notification_loop())
