@@ -8,7 +8,8 @@ import telegram
 from dotenv import load_dotenv
 from flask import Flask
 import threading
-import pytz  # Import the new library for timezones
+import pytz
+import json  # Import the json library
 
 # --- Flask Web Server Setup ---
 app = Flask(__name__)
@@ -30,13 +31,14 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY")
-CREDENTIALS_FILE = "credentials.json"
-# Set your timezone. A list of valid timezones can be found here:
-# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # Default to Europe/London if not set
+TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")
+# Get the credentials from the environment variable if it exists
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+CREDENTIALS_FILE = "credentials.json"  # Fallback for local development
 
 
 def check_env_variables():
+    # Only check for the main variables, as credentials can be handled in two ways
     if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GOOGLE_SHEET_KEY]):
         print("❌ FATAL ERROR: One or more environment variables are not set.", flush=True)
         return False
@@ -44,12 +46,27 @@ def check_env_variables():
 
 
 def setup_google_sheets_client():
+    """Authenticates with Google Sheets using credentials from an environment variable or a local file."""
     try:
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"]
-        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+
+        # ** THE FIX IS HERE **
+        # Prioritize environment variable (for Heroku/Render)
+        if GOOGLE_CREDENTIALS_JSON:
+            print("Found GOOGLE_CREDENTIALS_JSON. Authenticating from environment variable.", flush=True)
+            creds_json = json.loads(GOOGLE_CREDENTIALS_JSON)
+            creds = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
+        # Fallback to local file (for local testing)
+        else:
+            print(f"GOOGLE_CREDENTIALS_JSON not found. Authenticating from local file: {CREDENTIALS_FILE}", flush=True)
+            creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+
         return gspread.authorize(creds)
+
     except FileNotFoundError:
-        print(f"❌ ERROR: '{CREDENTIALS_FILE}' not found.", flush=True)
+        print(
+            f"❌ ERROR: Neither GOOGLE_CREDENTIALS_JSON environment variable nor '{CREDENTIALS_FILE}' file were found.",
+            flush=True)
         return None
     except Exception as e:
         print(f"❌ An error occurred during Google Sheets authentication: {e}", flush=True)
@@ -59,7 +76,6 @@ def setup_google_sheets_client():
 def get_todays_schedule(client):
     if not client: return []
     try:
-        # Use the correct timezone to determine "today"
         tz = pytz.timezone(TIMEZONE)
         today_str = datetime.now(tz).strftime("%Y-%m-%d")
 
@@ -100,7 +116,6 @@ async def notification_loop():
     gspread_client = setup_google_sheets_client()
 
     schedule = get_todays_schedule(gspread_client)
-    # Track the last hour the schedule was fetched
     last_hour_checked = datetime.now(pytz.timezone(TIMEZONE)).hour
     notified_tasks = set()
 
@@ -108,16 +123,14 @@ async def notification_loop():
         tz = pytz.timezone(TIMEZONE)
         current_time = datetime.now(tz)
 
-        # Check if it's a new hour to fetch a new schedule
         if current_time.hour != last_hour_checked:
             print(f"\n🔄 New hour detected! Refreshing schedule...", flush=True)
             schedule = get_todays_schedule(gspread_client)
             last_hour_checked = current_time.hour
-            notified_tasks.clear()  # Reset notified tasks to allow for changes
+            notified_tasks.clear()
 
         current_time_str_12hr = current_time.strftime("%I:%M %p").upper()
 
-        # Added for debugging
         print(
             f"[{current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}] Checking for tasks. Current time: {current_time_str_12hr}",
             flush=True)

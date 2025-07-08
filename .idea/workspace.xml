@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="add new file">
+    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="update new file">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Procfile" beforeDir="false" afterPath="$PROJECT_DIR$/Procfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +40,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_ADD_EXTERNAL_FILES": "true",
-    "Python.main.executor": "Debug",
+    "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "last_opened_file_path": "C:/Users/ahmad/PycharmProjects/DailyPlannerRenderBackend"
@@ -187,7 +187,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751982872381</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="update new file">
+      <option name="closed" value="true" />
+      <created>1751985795162</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1751985795162</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -203,6 +211,7 @@
     <MESSAGE value="update print statements" />
     <MESSAGE value="Update code reading schedual from sheet to be every hour instead of every day" />
     <MESSAGE value="add new file" />
-    <option name="LAST_COMMIT_MESSAGE" value="add new file" />
+    <MESSAGE value="update new file" />
+    <option name="LAST_COMMIT_MESSAGE" value="update new file" />
   </component>
 </project>
