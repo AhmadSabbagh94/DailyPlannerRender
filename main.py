@@ -50,7 +50,6 @@ def setup_google_sheets_client():
     try:
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"]
 
-        # ** THE FIX IS HERE **
         # Prioritize environment variable (for Heroku/Render)
         if GOOGLE_CREDENTIALS_JSON:
             print("Found GOOGLE_CREDENTIALS_JSON. Authenticating from environment variable.", flush=True)
@@ -74,29 +73,45 @@ def setup_google_sheets_client():
 
 
 def get_todays_schedule(client):
-    if not client: return []
+    """Fetches and parses today's schedule, returning both timed and flexible tasks."""
+    if not client: return [], []
     try:
         tz = pytz.timezone(TIMEZONE)
         today_str = datetime.now(tz).strftime("%Y-%m-%d")
 
         spreadsheet = client.open_by_key(GOOGLE_SHEET_KEY)
         worksheet = spreadsheet.worksheet(today_str)
-        all_data = worksheet.get_all_values()[3:]
-        schedule = []
+        all_data = worksheet.get_all_values()
+
+        timed_schedule = []
+        flexible_tasks = []
+        parsing_flexible = False
+
         for row in all_data:
-            time_str, activity = row[0], row[1]
-            if not time_str or "Flexible" in activity: break
-            if activity and activity != "---":
-                schedule.append({"time": time_str, "activity": activity})
+            # Check for the start of the flexible tasks section
+            if len(row) > 1 and "Flexible Tasks" in row[0]:
+                parsing_flexible = True
+                continue
+
+            if parsing_flexible:
+                if row and row[0]:  # Check if the row and the first cell are not empty
+                    flexible_tasks.append(row[0])
+            else:  # Parsing timed tasks
+                if len(row) > 1 and row[0] and "Time" not in row[0] and "Schedule" not in row[0]:
+                    time_str, activity = row[0], row[1]
+                    if activity and activity != "---":
+                        timed_schedule.append({"time": time_str, "activity": activity})
+
         print(f"✅ Successfully fetched schedule for today: {today_str}", flush=True)
-        print(f"   Found {len(schedule)} timed tasks.", flush=True)
-        return schedule
+        print(f"   Found {len(timed_schedule)} timed tasks and {len(flexible_tasks)} flexible tasks.", flush=True)
+        return timed_schedule, flexible_tasks
+
     except gspread.exceptions.WorksheetNotFound:
         print(f"⚠️ No worksheet found for today ({today_str}). Will try again later.", flush=True)
-        return []
+        return [], []
     except Exception as e:
         print(f"❌ An error occurred fetching the schedule: {e}", flush=True)
-        return []
+        return [], []
 
 
 async def send_telegram_notification(bot, message):
@@ -115,7 +130,7 @@ async def notification_loop():
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     gspread_client = setup_google_sheets_client()
 
-    schedule = get_todays_schedule(gspread_client)
+    schedule, _ = get_todays_schedule(gspread_client)  # Ignore flexible tasks on initial fetch
     last_hour_checked = datetime.now(pytz.timezone(TIMEZONE)).hour
     notified_tasks = set()
 
@@ -125,9 +140,18 @@ async def notification_loop():
 
         if current_time.hour != last_hour_checked:
             print(f"\n🔄 New hour detected! Refreshing schedule...", flush=True)
-            schedule = get_todays_schedule(gspread_client)
+            schedule, flexible_tasks = get_todays_schedule(gspread_client)
             last_hour_checked = current_time.hour
             notified_tasks.clear()
+
+            # ** THE FIX IS HERE **
+            # Send a summary of flexible tasks every hour
+            if flexible_tasks:
+                message_parts = [" hourly flexible task reminder:"]
+                for task in flexible_tasks:
+                    message_parts.append(f"  - {task}")
+                flexible_task_summary = "\n".join(message_parts)
+                await send_telegram_notification(bot, flexible_task_summary)
 
         current_time_str_12hr = current_time.strftime("%I:%M %p").upper()
 
