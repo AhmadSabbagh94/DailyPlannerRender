@@ -38,7 +38,7 @@ TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # Default to Europe/Lond
 
 def check_env_variables():
     if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GOOGLE_SHEET_KEY]):
-        print("❌ FATAL ERROR: One or more environment variables are not set.")
+        print("❌ FATAL ERROR: One or more environment variables are not set.", flush=True)
         return False
     return True
 
@@ -49,10 +49,10 @@ def setup_google_sheets_client():
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
         return gspread.authorize(creds)
     except FileNotFoundError:
-        print(f"❌ ERROR: '{CREDENTIALS_FILE}' not found.")
+        print(f"❌ ERROR: '{CREDENTIALS_FILE}' not found.", flush=True)
         return None
     except Exception as e:
-        print(f"❌ An error occurred during Google Sheets authentication: {e}")
+        print(f"❌ An error occurred during Google Sheets authentication: {e}", flush=True)
         return None
 
 
@@ -72,29 +72,29 @@ def get_todays_schedule(client):
             if not time_str or "Flexible" in activity: break
             if activity and activity != "---":
                 schedule.append({"time": time_str, "activity": activity})
-        print(f"✅ Successfully fetched schedule for today: {today_str}")
-        print(f"   Found {len(schedule)} timed tasks.")
+        print(f"✅ Successfully fetched schedule for today: {today_str}", flush=True)
+        print(f"   Found {len(schedule)} timed tasks.", flush=True)
         return schedule
     except gspread.exceptions.WorksheetNotFound:
-        print(f"⚠️ No worksheet found for today ({today_str}). Will try again later.")
+        print(f"⚠️ No worksheet found for today ({today_str}). Will try again later.", flush=True)
         return []
     except Exception as e:
-        print(f"❌ An error occurred fetching the schedule: {e}")
+        print(f"❌ An error occurred fetching the schedule: {e}", flush=True)
         return []
 
 
 async def send_telegram_notification(bot, message):
     try:
         await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        print(f"🚀 Notification sent: {message}")
+        print(f"🚀 Notification sent: {message}", flush=True)
     except Exception as e:
-        print(f"❌ Failed to send Telegram notification: {e}")
+        print(f"❌ Failed to send Telegram notification: {e}", flush=True)
 
 
 async def notification_loop():
     if not check_env_variables(): return
 
-    print(f"--- Starting Notification Service in timezone: {TIMEZONE} ---")
+    print(f"--- Starting Notification Service in timezone: {TIMEZONE} ---", flush=True)
 
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     gspread_client = setup_google_sheets_client()
@@ -108,7 +108,7 @@ async def notification_loop():
         current_time = datetime.now(tz)
 
         if current_time.day != last_day_checked:
-            print(f"\n🌅 New day detected! Fetching new schedule for {current_time.strftime('%Y-%m-%d')}...")
+            print(f"\n🌅 New day detected! Fetching new schedule for {current_time.strftime('%Y-%m-%d')}...", flush=True)
             schedule = get_todays_schedule(gspread_client)
             last_day_checked = current_time.day
             notified_tasks.clear()
@@ -117,7 +117,8 @@ async def notification_loop():
 
         # Added for debugging
         print(
-            f"[{current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}] Checking for tasks. Current time: {current_time_str_12hr}")
+            f"[{current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}] Checking for tasks. Current time: {current_time_str_12hr}",
+            flush=True)
 
         for task in schedule:
             task_key = f"{task['time']}-{task['activity']}"
@@ -132,5 +133,7 @@ async def notification_loop():
 if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask_app, daemon=True)
     flask_thread.start()
-    print("🚀 Flask web server started in a background thread.")
+    print("🚀 Flask web server started in a background thread.", flush=True)
+
+    print("--- Preparing to start notification loop... ---", flush=True)
     asyncio.run(notification_loop())
