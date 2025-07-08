@@ -8,27 +8,22 @@ import telegram
 from dotenv import load_dotenv
 from flask import Flask
 import threading
+import pytz  # Import the new library for timezones
 
 # --- Flask Web Server Setup ---
-# This part makes the script act like a web service to satisfy Render's requirements.
 app = Flask(__name__)
 
 
 @app.route('/')
 def home():
-    # This is the endpoint that UptimeRobot will ping.
     return "Notification service is running."
 
 
 def run_flask_app():
-    # Runs the Flask app in a separate thread.
-    # The host '0.0.0.0' is required by Render.
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
 
-# --- Notification Logic (largely the same as before) ---
-
-# Load environment variables from a .env file for local development
+# --- Notification Logic ---
 load_dotenv()
 
 # Configuration
@@ -36,6 +31,9 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GOOGLE_SHEET_KEY = os.environ.get("GOOGLE_SHEET_KEY")
 CREDENTIALS_FILE = "credentials.json"
+# Set your timezone. A list of valid timezones can be found here:
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # Default to Europe/London if not set
 
 
 def check_env_variables():
@@ -61,7 +59,10 @@ def setup_google_sheets_client():
 def get_todays_schedule(client):
     if not client: return []
     try:
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        # Use the correct timezone to determine "today"
+        tz = pytz.timezone(TIMEZONE)
+        today_str = datetime.now(tz).strftime("%Y-%m-%d")
+
         spreadsheet = client.open_by_key(GOOGLE_SHEET_KEY)
         worksheet = spreadsheet.worksheet(today_str)
         all_data = worksheet.get_all_values()[3:]
@@ -91,28 +92,32 @@ async def send_telegram_notification(bot, message):
 
 
 async def notification_loop():
-    """The main async loop for the notification service."""
     if not check_env_variables(): return
 
-    print("--- Starting Notification Service Logic ---")
+    print(f"--- Starting Notification Service in timezone: {TIMEZONE} ---")
 
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     gspread_client = setup_google_sheets_client()
 
     schedule = get_todays_schedule(gspread_client)
-    last_day_checked = datetime.now().day
+    last_day_checked = datetime.now(pytz.timezone(TIMEZONE)).day
     notified_tasks = set()
 
     while True:
-        current_time = datetime.now()
+        tz = pytz.timezone(TIMEZONE)
+        current_time = datetime.now(tz)
 
         if current_time.day != last_day_checked:
-            print("\n🌅 New day detected! Fetching new schedule...")
+            print(f"\n🌅 New day detected! Fetching new schedule for {current_time.strftime('%Y-%m-%d')}...")
             schedule = get_todays_schedule(gspread_client)
             last_day_checked = current_time.day
             notified_tasks.clear()
 
         current_time_str_12hr = current_time.strftime("%I:%M %p").upper()
+
+        # Added for debugging
+        print(
+            f"[{current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}] Checking for tasks. Current time: {current_time_str_12hr}")
 
         for task in schedule:
             task_key = f"{task['time']}-{task['activity']}"
@@ -125,10 +130,7 @@ async def notification_loop():
 
 
 if __name__ == "__main__":
-    # 1. Start the Flask web server in a separate thread
     flask_thread = threading.Thread(target=run_flask_app, daemon=True)
     flask_thread.start()
     print("🚀 Flask web server started in a background thread.")
-
-    # 2. Run the main async notification loop
     asyncio.run(notification_loop())

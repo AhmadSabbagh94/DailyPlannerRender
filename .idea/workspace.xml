@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="code fixed">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="UPDATE project to be Flask web">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -133,7 +131,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751829656975</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="UPDATE project to be Flask web">
+      <option name="closed" value="true" />
+      <created>1751913090955</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1751913090955</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -142,6 +148,7 @@
     <MESSAGE value="Update security issue" />
     <MESSAGE value="requirements.txt added" />
     <MESSAGE value="code fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="code fixed" />
+    <MESSAGE value="UPDATE project to be Flask web" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE project to be Flask web" />
   </component>
 </project>
