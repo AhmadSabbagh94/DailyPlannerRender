@@ -100,18 +100,20 @@ async def notification_loop():
     gspread_client = setup_google_sheets_client()
 
     schedule = get_todays_schedule(gspread_client)
-    last_day_checked = datetime.now(pytz.timezone(TIMEZONE)).day
+    # Track the last hour the schedule was fetched
+    last_hour_checked = datetime.now(pytz.timezone(TIMEZONE)).hour
     notified_tasks = set()
 
     while True:
         tz = pytz.timezone(TIMEZONE)
         current_time = datetime.now(tz)
 
-        if current_time.day != last_day_checked:
-            print(f"\n🌅 New day detected! Fetching new schedule for {current_time.strftime('%Y-%m-%d')}...", flush=True)
+        # Check if it's a new hour to fetch a new schedule
+        if current_time.hour != last_hour_checked:
+            print(f"\n🔄 New hour detected! Refreshing schedule...", flush=True)
             schedule = get_todays_schedule(gspread_client)
-            last_day_checked = current_time.day
-            notified_tasks.clear()
+            last_hour_checked = current_time.hour
+            notified_tasks.clear()  # Reset notified tasks to allow for changes
 
         current_time_str_12hr = current_time.strftime("%I:%M %p").upper()
 
