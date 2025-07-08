@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="Update local timing with txt" />
+    <list default="true" id="213111c6-6602-49ab-a4bd-7c59c7fccb45" name="Changes" comment="update Requirements from pc" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -152,7 +152,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751934310575</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="update Requirements from pc">
+      <option name="closed" value="true" />
+      <created>1751934573606</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1751934573606</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -164,6 +172,7 @@
     <MESSAGE value="UPDATE project to be Flask web" />
     <MESSAGE value="Update local timing" />
     <MESSAGE value="Update local timing with txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update local timing with txt" />
+    <MESSAGE value="update Requirements from pc" />
+    <option name="LAST_COMMIT_MESSAGE" value="update Requirements from pc" />
   </component>
 </project>
